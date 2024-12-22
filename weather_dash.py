@@ -61,7 +61,7 @@ if not data.empty:
     st.write("## Latest 10 Data Entries")
     st.dataframe(data, height=200)
 
-    # Layout for 6 visuals in a 3x2 grid with proper spacing and titles
+    # Layout for 6 visuals in a 3x2 grid with increased spacing
     st.markdown("## Dashboard Overview")
     st.markdown("### Air Quality Trends and Insights")
 
@@ -72,11 +72,13 @@ if not data.empty:
         fig1 = px.line(data, x="created_at", y="PM2.5", markers=True, title="PM2.5 Levels Over Time (µg/m³)")
         fig1.update_layout(xaxis_title="Time (hh:mm)", yaxis_title="PM2.5 (µg/m³)")
         st.plotly_chart(fig1, use_container_width=True)
+    st.write("")  # Add vertical space
     with col2:
         st.subheader("PM10 Levels Over Time")
         fig2 = px.line(data, x="created_at", y="PM10", markers=True, title="PM10 Levels Over Time (µg/m³)")
         fig2.update_layout(xaxis_title="Time (hh:mm)", yaxis_title="PM10 (µg/m³)")
         st.plotly_chart(fig2, use_container_width=True)
+    st.write("")  # Add vertical space
     with col3:
         st.subheader("Ozone Levels Over Time")
         fig3 = px.bar(data, x="created_at", y="Ozone", color="Ozone", title="Ozone Levels Over Time (ppb)")
@@ -84,7 +86,7 @@ if not data.empty:
         st.plotly_chart(fig3, use_container_width=True)
 
     # Add a separator for visual clarity
-    st.markdown("<hr>", unsafe_allow_html=True)
+    st.markdown("<br><br><hr>", unsafe_allow_html=True)
 
     # Row 2: Next three visuals
     col4, col5, col6 = st.columns([1, 1, 1], gap="large")
@@ -100,6 +102,7 @@ if not data.empty:
         )
         fig4.update_layout(xaxis_title="Temperature (°C)", yaxis_title="Humidity (%)")
         st.plotly_chart(fig4, use_container_width=True)
+    st.write("")  # Add vertical space
     with col5:
         st.subheader("Correlation Heatmap")
         correlation_matrix = data.iloc[:, 1:].corr()
@@ -107,6 +110,7 @@ if not data.empty:
         sns.heatmap(correlation_matrix, annot=True, cmap="coolwarm", ax=ax)
         ax.set_title("Correlation Heatmap of Air Quality Parameters")
         st.pyplot(fig5)
+    st.write("")  # Add vertical space
     with col6:
         st.subheader("CO Levels Over Time")
         fig6 = px.line(data, x="created_at", y="CO", markers=True, title="CO Levels Over Time (ppm)")
