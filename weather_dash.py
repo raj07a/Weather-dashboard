@@ -15,7 +15,6 @@ def fetch_api_data():
     if response.status_code == 200:
         data = response.json()
         feeds = data["feeds"]
-        channel_info = data["channel"]
         
         # Convert feeds into a DataFrame
         df = pd.DataFrame(feeds)
@@ -33,19 +32,16 @@ def fetch_api_data():
         # Convert numeric fields
         for field in ["PM2.5", "PM10", "Ozone", "Humidity", "Temperature", "CO"]:
             df[field] = pd.to_numeric(df[field], errors="coerce")
-        return df, channel_info
+        return df
     else:
         st.error(f"Failed to fetch data: {response.status_code}")
-        return pd.DataFrame(), {}
+        return pd.DataFrame()
 
 # Load data
 st.title("Air Quality Monitoring Dashboard")
-data, channel_info = fetch_api_data()
+st.write("### Data is refreshed every 1 hour.")
 
-# Display channel metadata
-if channel_info:
-    st.write("### Channel Information")
-    st.json(channel_info)
+data = fetch_api_data()
 
 # Use the last 10 entries for visualization
 if not data.empty:
