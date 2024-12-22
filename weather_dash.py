@@ -68,11 +68,11 @@ if not data.empty:
     col1, col2 = st.columns(2)
     with col1:
         st.subheader("PM2.5 Levels Over Time")
-        fig1 = px.line(data, x="created_at", y="PM2.5", markers=True, title="PM2.5 Levels Over Time")
+        fig1 = px.line(data, x="created_at", y="PM2.5", markers=True, title="PM2.5 Over Time")
         st.plotly_chart(fig1, use_container_width=True)
     with col2:
         st.subheader("PM10 Levels Over Time")
-        fig2 = px.line(data, x="created_at", y="PM10", markers=True, title="PM10 Levels Over Time")
+        fig2 = px.line(data, x="created_at", y="PM10", markers=True, title="PM10 Over Time")
         st.plotly_chart(fig2, use_container_width=True)
 
     # Row 2: Next two visuals
@@ -82,25 +82,23 @@ if not data.empty:
         fig3 = px.bar(data, x="created_at", y="Ozone", color="Ozone", title="Ozone Levels")
         st.plotly_chart(fig3, use_container_width=True)
     with col4:
-        st.subheader("Temperature vs Humidity")
-        fig4 = px.scatter(
+        st.subheader("Temperature and Humidity Trends Over Time")
+        fig_temp_hum = px.line(
             data,
-            x="Temperature",
-            y="Humidity",
-            size="PM2.5",
-            color="PM10",
-            title="Humidity vs Temperature",
+            x="created_at",
+            y=["Temperature", "Humidity"],
+            labels={"value": "Levels", "variable": "Metrics"},
+            title="Temperature and Humidity Trends Over Time",
+            markers=True,
         )
-        st.plotly_chart(fig4, use_container_width=True)
+        st.plotly_chart(fig_temp_hum, use_container_width=True)
 
-    # Row 3: Final two visuals
+    # Row 3: Last two visuals
     col5, col6 = st.columns(2)
     with col5:
-        st.subheader("Correlation Heatmap")
-        correlation_matrix = data.iloc[:, 1:].corr()
-        fig5, ax = plt.subplots(figsize=(6, 5))
-        sns.heatmap(correlation_matrix, annot=True, cmap="coolwarm", ax=ax)
-        st.pyplot(fig5)
+        st.subheader("Pair Plot for Variable Relationships")
+        sns.pairplot(data[["PM2.5", "PM10", "Ozone", "Humidity", "Temperature", "CO"]], diag_kind="kde")
+        st.pyplot()
     with col6:
         st.subheader("CO Levels Over Time")
         fig6 = px.line(data, x="created_at", y="CO", markers=True, title="CO Levels")
