@@ -56,44 +56,34 @@ else:
     st.warning("Data flow is paused. Toggle the switch to fetch data.")
     data = pd.DataFrame()
 
-# Layout for visuals
+# Dashboard visuals
 if not data.empty:
     st.write("## Latest 10 Data Entries")
     st.dataframe(data, height=200)
 
-    # Dashboard visuals with spacing and better layout
+    # Layout for 6 visuals in a 3x2 grid
     st.write("## Dashboard Overview")
 
-    # Row 1: Metrics
-    col1, col2, col3 = st.columns([1, 1, 1])
+    # Row 1: First three visuals
+    col1, col2, col3 = st.columns(3)
     with col1:
-        st.metric("PM2.5", f"{data['PM2.5'].iloc[-1]:.2f} µg/m³")
-    with col2:
-        st.metric("PM10", f"{data['PM10'].iloc[-1]:.2f} µg/m³")
-    with col3:
-        st.metric("Ozone", f"{data['Ozone'].iloc[-1]:.2f} ppb")
-
-    st.markdown("---")  # Divider for clarity
-
-    # Row 2: PM Levels and Ozone Levels
-    col4, col5 = st.columns([2, 1])  # Wider column for line chart
-    with col4:
-        st.subheader("PM2.5 and PM10 Levels Over Time")
-        fig1 = px.line(data, x="created_at", y=["PM2.5", "PM10"], markers=True, 
-                       title="PM Levels Over Time")
+        st.subheader("PM2.5 Levels Over Time")
+        fig1 = px.line(data, x="created_at", y="PM2.5", markers=True, title="PM2.5 Over Time")
         st.plotly_chart(fig1, use_container_width=True)
-    with col5:
-        st.subheader("Ozone Levels Over Time")
-        fig2 = px.bar(data, x="created_at", y="Ozone", color="Ozone", title="Ozone Levels")
+    with col2:
+        st.subheader("PM10 Levels Over Time")
+        fig2 = px.line(data, x="created_at", y="PM10", markers=True, title="PM10 Over Time")
         st.plotly_chart(fig2, use_container_width=True)
+    with col3:
+        st.subheader("Ozone Levels Over Time")
+        fig3 = px.bar(data, x="created_at", y="Ozone", color="Ozone", title="Ozone Levels")
+        st.plotly_chart(fig3, use_container_width=True)
 
-    st.markdown("---")  # Divider for clarity
-
-    # Row 3: Scatter Plot and Correlation Heatmap
-    col6, col7 = st.columns([1, 1])  # Equal width for scatter plot and heatmap
-    with col6:
+    # Row 2: Next three visuals
+    col4, col5, col6 = st.columns(3)
+    with col4:
         st.subheader("Temperature vs Humidity")
-        fig3 = px.scatter(
+        fig4 = px.scatter(
             data,
             x="Temperature",
             y="Humidity",
@@ -101,12 +91,16 @@ if not data.empty:
             color="PM10",
             title="Humidity vs Temperature",
         )
-        st.plotly_chart(fig3, use_container_width=True)
-    with col7:
+        st.plotly_chart(fig4, use_container_width=True)
+    with col5:
         st.subheader("Correlation Heatmap")
         correlation_matrix = data.iloc[:, 1:].corr()
-        fig4, ax = plt.subplots(figsize=(6, 5))
+        fig5, ax = plt.subplots(figsize=(5, 4))
         sns.heatmap(correlation_matrix, annot=True, cmap="coolwarm", ax=ax)
-        st.pyplot(fig4)
+        st.pyplot(fig5)
+    with col6:
+        st.subheader("CO Levels Over Time")
+        fig6 = px.line(data, x="created_at", y="CO", markers=True, title="CO Levels")
+        st.plotly_chart(fig6, use_container_width=True)
 else:
     st.warning("No data available to display.")
