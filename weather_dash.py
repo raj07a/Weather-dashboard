@@ -37,52 +37,76 @@ def fetch_api_data():
         st.error(f"Failed to fetch data: {response.status_code}")
         return pd.DataFrame()
 
-# Load data
+# Page Title
 st.title("Air Quality Monitoring Dashboard")
 st.write("### Data is refreshed every 1 hour.")
+st.write("Toggle the switch below to control the data flow.")
 
-data = fetch_api_data()
+# Initialize session state for data flow
+if "data_flow" not in st.session_state:
+    st.session_state.data_flow = True
 
-# Use the last 10 entries for visualization
+# Toggle switch for data flow
+data_flow = st.checkbox("Enable Data Flow", value=st.session_state.data_flow)
+st.session_state.data_flow = data_flow
+
+if data_flow:
+    data = fetch_api_data()
+else:
+    st.warning("Data flow is paused. Toggle the switch to fetch data.")
+    data = pd.DataFrame()
+
+# Layout for visuals
 if not data.empty:
-    st.write("## Last 10 Data Entries")
+    st.write("## Latest 10 Data Entries")
     st.dataframe(data)
 
-    # Time-Series Line Chart for PM Levels
-    st.subheader("PM Levels Over Time")
-    fig1 = px.line(data, x="created_at", y=["PM2.5", "PM10"], markers=True, 
-                   title="PM2.5 and PM10 Levels Over Time")
-    st.plotly_chart(fig1)
-
-    # Bar Chart for Ozone Levels
-    st.subheader("Ozone Levels Over Time")
-    fig2 = px.bar(data, x="created_at", y="Ozone", color="Ozone", title="Ozone Levels")
-    st.plotly_chart(fig2)
-
-    # Scatter Plot: Temperature vs Humidity
-    st.subheader("Temperature vs Humidity")
-    fig3 = px.scatter(
-        data,
-        x="Temperature",
-        y="Humidity",
-        size="PM2.5",
-        color="PM10",
-        title="Humidity vs Temperature (Bubble: PM2.5, Color: PM10)",
-    )
-    st.plotly_chart(fig3)
-
-    # Heatmap for Correlations
-    st.subheader("Correlation Heatmap")
-    correlation_matrix = data.iloc[:, 1:].corr()
-    fig4, ax = plt.subplots(figsize=(8, 6))
-    sns.heatmap(correlation_matrix, annot=True, cmap="coolwarm", ax=ax)
-    st.pyplot(fig4)
+    # Dashboard visuals in a real-time layout
+    col1, col2, col3 = st.columns(3)
 
     # Metrics for Current Values
-    st.subheader("Latest Values")
-    col1, col2, col3 = st.columns(3)
-    col1.metric("PM2.5", f"{data['PM2.5'].iloc[-1]:.2f} µg/m³")
-    col2.metric("PM10", f"{data['PM10'].iloc[-1]:.2f} µg/m³")
-    col3.metric("Ozone", f"{data['Ozone'].iloc[-1]} ppb")
+    with col1:
+        st.subheader("Latest Values")
+        st.metric("PM2.5", f"{data['PM2.5'].iloc[-1]:.2f} µg/m³")
+        st.metric("PM10", f"{data['PM10'].iloc[-1]:.2f} µg/m³")
+        st.metric("Ozone", f"{data['Ozone'].iloc[-1]} ppb")
+
+    # Time-Series Line Chart for PM Levels
+    with col2:
+        st.subheader("PM Levels Over Time")
+        fig1 = px.line(data, x="created_at", y=["PM2.5", "PM10"], markers=True, 
+                       title="PM2.5 and PM10 Levels")
+        st.plotly_chart(fig1)
+
+    # Bar Chart for Ozone Levels
+    with col3:
+        st.subheader("Ozone Levels Over Time")
+        fig2 = px.bar(data, x="created_at", y="Ozone", color="Ozone", title="Ozone Levels")
+        st.plotly_chart(fig2)
+
+    # Additional row for scatter plot and heatmap
+    col4, col5 = st.columns(2)
+
+    # Scatter Plot: Temperature vs Humidity
+    with col4:
+        st.subheader("Temperature vs Humidity")
+        fig3 = px.scatter(
+            data,
+            x="Temperature",
+            y="Humidity",
+            size="PM2.5",
+            color="PM10",
+            title="Humidity vs Temperature (Bubble: PM2.5, Color: PM10)",
+        )
+        st.plotly_chart(fig3)
+
+    # Heatmap for Correlations
+    with col5:
+        st.subheader("Correlation Heatmap")
+        correlation_matrix = data.iloc[:, 1:].corr()
+        fig4, ax = plt.subplots(figsize=(6, 5))
+        sns.heatmap(correlation_matrix, annot=True, cmap="coolwarm", ax=ax)
+        st.pyplot(fig4)
+
 else:
     st.warning("No data available to display.")
