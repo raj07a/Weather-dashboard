@@ -38,9 +38,9 @@ def fetch_api_data():
         return pd.DataFrame()
 
 # Page Title
-st.title("Air Quality Monitoring Dashboard")
-st.write("### Data is refreshed every 1 hour.")
-st.write("Toggle the switch below to control the data flow.")
+st.title("Enhanced Air Quality Monitoring Dashboard")
+st.write("### Real-time air quality data is refreshed every 1 hour.")
+st.write("Use the toggle below to pause or resume data flow.")
 
 # Initialize session state for data flow
 if "data_flow" not in st.session_state:
@@ -61,26 +61,33 @@ if not data.empty:
     st.write("## Latest 10 Data Entries")
     st.dataframe(data, height=200)
 
-    # Layout for 6 visuals in a 3x2 grid
-    st.write("## Dashboard Overview")
+    # Layout for 6 visuals in a 3x2 grid with proper spacing and titles
+    st.markdown("## Dashboard Overview")
+    st.markdown("### Air Quality Trends and Insights")
 
     # Row 1: First three visuals
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3 = st.columns([1, 1, 1], gap="large")
     with col1:
         st.subheader("PM2.5 Levels Over Time")
-        fig1 = px.line(data, x="created_at", y="PM2.5", markers=True, title="PM2.5 Over Time")
+        fig1 = px.line(data, x="created_at", y="PM2.5", markers=True, title="PM2.5 Levels Over Time (µg/m³)")
+        fig1.update_layout(xaxis_title="Time (hh:mm)", yaxis_title="PM2.5 (µg/m³)")
         st.plotly_chart(fig1, use_container_width=True)
     with col2:
         st.subheader("PM10 Levels Over Time")
-        fig2 = px.line(data, x="created_at", y="PM10", markers=True, title="PM10 Over Time")
+        fig2 = px.line(data, x="created_at", y="PM10", markers=True, title="PM10 Levels Over Time (µg/m³)")
+        fig2.update_layout(xaxis_title="Time (hh:mm)", yaxis_title="PM10 (µg/m³)")
         st.plotly_chart(fig2, use_container_width=True)
     with col3:
         st.subheader("Ozone Levels Over Time")
-        fig3 = px.bar(data, x="created_at", y="Ozone", color="Ozone", title="Ozone Levels")
+        fig3 = px.bar(data, x="created_at", y="Ozone", color="Ozone", title="Ozone Levels Over Time (ppb)")
+        fig3.update_layout(xaxis_title="Time (hh:mm)", yaxis_title="Ozone (ppb)")
         st.plotly_chart(fig3, use_container_width=True)
 
+    # Add a separator for visual clarity
+    st.markdown("<hr>", unsafe_allow_html=True)
+
     # Row 2: Next three visuals
-    col4, col5, col6 = st.columns(3)
+    col4, col5, col6 = st.columns([1, 1, 1], gap="large")
     with col4:
         st.subheader("Temperature vs Humidity")
         fig4 = px.scatter(
@@ -89,18 +96,22 @@ if not data.empty:
             y="Humidity",
             size="PM2.5",
             color="PM10",
-            title="Humidity vs Temperature",
+            title="Temperature vs Humidity (Bubble: PM2.5, Color: PM10)",
         )
+        fig4.update_layout(xaxis_title="Temperature (°C)", yaxis_title="Humidity (%)")
         st.plotly_chart(fig4, use_container_width=True)
     with col5:
         st.subheader("Correlation Heatmap")
         correlation_matrix = data.iloc[:, 1:].corr()
-        fig5, ax = plt.subplots(figsize=(5, 4))
+        fig5, ax = plt.subplots(figsize=(6, 5))
         sns.heatmap(correlation_matrix, annot=True, cmap="coolwarm", ax=ax)
+        ax.set_title("Correlation Heatmap of Air Quality Parameters")
         st.pyplot(fig5)
     with col6:
         st.subheader("CO Levels Over Time")
-        fig6 = px.line(data, x="created_at", y="CO", markers=True, title="CO Levels")
+        fig6 = px.line(data, x="created_at", y="CO", markers=True, title="CO Levels Over Time (ppm)")
+        fig6.update_layout(xaxis_title="Time (hh:mm)", yaxis_title="CO (ppm)")
         st.plotly_chart(fig6, use_container_width=True)
+
 else:
     st.warning("No data available to display.")
