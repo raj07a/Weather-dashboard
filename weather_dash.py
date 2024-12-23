@@ -15,7 +15,7 @@ def fetch_api_data():
     if response.status_code == 200:
         data = response.json()
         feeds = data["feeds"]
-        
+
         # Convert feeds into a DataFrame
         df = pd.DataFrame(feeds)
         df["created_at"] = pd.to_datetime(df["created_at"])  # Convert timestamps
@@ -61,7 +61,7 @@ if not data.empty:
     st.write("## Latest 10 Data Entries")
     st.dataframe(data, height=200)
 
-    # Layout for 6 visuals in a 3x2 grid
+    # Layout for 6 visuals in a 2x3 grid
     st.write("## Dashboard Overview")
 
     # Row 1: First three visuals
@@ -82,47 +82,13 @@ if not data.empty:
     # Row 2: Next three visuals
     col4, col5, col6 = st.columns(3)
     with col4:
-        st.subheader("Temperature vs Humidity (Density Heatmap)")
-        fig4 = px.density_heatmap(
-            data, 
-            x="Temperature", 
-            y="Humidity", 
-            color_continuous_scale="Viridis",
-            title="Density of Temperature vs Humidity"
-        )
+        st.subheader("Temperature Over Time")
+        fig4 = px.line(data, x="created_at", y="Temperature", markers=True, title="Temperature Over Time")
         st.plotly_chart(fig4, use_container_width=True)
-    
-with col5:
-    st.subheader("Correlation Network")
-    # Ensure numeric columns and drop NaN values
-    numeric_data = data.select_dtypes(include=['float64', 'int64']).dropna()
-    
-    if numeric_data.shape[1] < 2:  # Ensure at least two columns for correlation
-        st.warning("Not enough numeric data to compute correlations.")
-    else:
-        correlation_matrix = numeric_data.corr()
-        corr_edges = (
-            correlation_matrix.stack()
-            .reset_index()
-            .rename(columns={0: "correlation"})
-            .query("abs(correlation) > 0.5 and level_0 != level_1")
-        )
-
-        if corr_edges.empty:
-            st.warning("No significant correlations found to display.")
-        else:
-            fig5 = px.scatter(
-                corr_edges,
-                x="level_0",
-                y="level_1",
-                size="correlation",
-                color="correlation",
-                title="Correlation Network Graph",
-                labels={"level_0": "Variable 1", "level_1": "Variable 2"}
-            )
-            st.plotly_chart(fig5, use_container_width=True)
-
-    
+    with col5:
+        st.subheader("Humidity Over Time")
+        fig5 = px.line(data, x="created_at", y="Humidity", markers=True, title="Humidity Over Time")
+        st.plotly_chart(fig5, use_container_width=True)
     with col6:
         st.subheader("CO Levels Over Time")
         fig6 = px.line(data, x="created_at", y="CO", markers=True, title="CO Levels")
