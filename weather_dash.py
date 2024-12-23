@@ -92,24 +92,36 @@ if not data.empty:
         )
         st.plotly_chart(fig4, use_container_width=True)
     
-    with col5:
-        st.subheader("Correlation Network")
-        correlation_matrix = data.iloc[:, 1:].corr()
+with col5:
+    st.subheader("Correlation Network")
+    # Ensure numeric columns and drop NaN values
+    numeric_data = data.select_dtypes(include=['float64', 'int64']).dropna()
+    
+    if numeric_data.shape[1] < 2:  # Ensure at least two columns for correlation
+        st.warning("Not enough numeric data to compute correlations.")
+    else:
+        correlation_matrix = numeric_data.corr()
         corr_edges = (
             correlation_matrix.stack()
             .reset_index()
             .rename(columns={0: "correlation"})
-            .query("0.5 < abs(correlation) < 1")
+            .query("abs(correlation) > 0.5 and level_0 != level_1")
         )
-        fig5 = px.scatter(
-            corr_edges,
-            x="level_0",
-            y="level_1",
-            size="correlation",
-            color="correlation",
-            title="Correlation Network Graph",
-        )
-        st.plotly_chart(fig5, use_container_width=True)
+
+        if corr_edges.empty:
+            st.warning("No significant correlations found to display.")
+        else:
+            fig5 = px.scatter(
+                corr_edges,
+                x="level_0",
+                y="level_1",
+                size="correlation",
+                color="correlation",
+                title="Correlation Network Graph",
+                labels={"level_0": "Variable 1", "level_1": "Variable 2"}
+            )
+            st.plotly_chart(fig5, use_container_width=True)
+
     
     with col6:
         st.subheader("CO Levels Over Time")
