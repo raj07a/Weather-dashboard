@@ -96,9 +96,16 @@ if not data.empty:
     # Row 3: Last two visuals
     col5, col6 = st.columns(2)
     with col5:
-        st.subheader("Pair Plot for Variable Relationships")
-        sns.pairplot(data[["PM2.5", "PM10", "Ozone", "Humidity", "Temperature", "CO"]], diag_kind="kde")
-        st.pyplot()
+    st.subheader("Scatter Matrix for Variable Relationships")
+    fig_scatter_matrix = px.scatter_matrix(
+        data,
+        dimensions=["PM2.5", "PM10", "Ozone", "Humidity", "Temperature", "CO"],
+        title="Scatter Matrix of Variables",
+        labels={col: col for col in data.columns},
+        height=600,
+    )
+    st.plotly_chart(fig_scatter_matrix, use_container_width=True)
+
     with col6:
         st.subheader("CO Levels Over Time")
         fig6 = px.line(data, x="created_at", y="CO", markers=True, title="CO Levels")
