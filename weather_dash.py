@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import requests
 import plotly.express as px
+from datetime import datetime
 
 # API URL for data and control
 DATA_API_URL = "https://api.thingspeak.com/channels/1596152/feeds.json?results=1000"
@@ -63,21 +64,12 @@ if st.sidebar.button("Send Control Signal"):
 data = fetch_api_data()
 
 if not data.empty:
-    # Sidebar Dropdown for Year and Month
-    st.sidebar.subheader("Filter Data by Year and Month")
-    years = sorted(data["created_at"].dt.year.unique())
-    selected_year = st.sidebar.selectbox("Select Year", years)
-
-    months = sorted(data["created_at"][data["created_at"].dt.year == selected_year].dt.month.unique())
-    selected_month = st.sidebar.selectbox("Select Month", months)
-
-    # Filter data based on selected year and month
-    filtered_data = data[
-        (data["created_at"].dt.year == selected_year) & (data["created_at"].dt.month == selected_month)
-    ]
+    # Filter data for the current date
+    current_date = datetime.now().date()
+    filtered_data = data[data["created_at"].dt.date == current_date]
 
     if not filtered_data.empty:
-        st.write(f"### Hourly Data for {selected_year}-{selected_month:02d}")
+        st.write(f"### Hourly Data for {current_date}")
 
         # Line graphs for hourly trends
         metrics = ["PM2.5", "PM10", "Ozone", "Humidity", "Temperature", "CO"]
@@ -98,6 +90,6 @@ if not data.empty:
             )
             st.plotly_chart(fig, use_container_width=True)
     else:
-        st.warning(f"No data available for {selected_year}-{selected_month:02d}.")
+        st.warning(f"No data available for {current_date}.")
 else:
     st.warning("No data available to display.")
