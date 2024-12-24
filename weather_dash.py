@@ -2,15 +2,15 @@ import streamlit as st
 import pandas as pd
 import requests
 import plotly.express as px
-from datetime import datetime
 
-# API URL
-API_URL = "https://api.thingspeak.com/channels/1596152/feeds.json?results=1000"
+# API URL for data and control
+DATA_API_URL = "https://api.thingspeak.com/channels/1596152/feeds.json?results=1000"
+CONTROL_API_URL = "https://api.thingspeak.com/update"
 
 # Function to fetch data from the API
 @st.cache_data(ttl=3600)  # Cache data for 1 hour
 def fetch_api_data():
-    response = requests.get(API_URL)
+    response = requests.get(DATA_API_URL)
     if response.status_code == 200:
         data = response.json()
         feeds = data["feeds"]
@@ -41,36 +41,43 @@ def fetch_api_data():
         st.error(f"Failed to fetch data: {response.status_code}")
         return pd.DataFrame()
 
+# Function to send ON/OFF signal to the cloud
+def send_control_signal(state):
+    response = requests.post(CONTROL_API_URL, data={"field1": 1 if state else 0})
+    if response.status_code == 200:
+        st.success(f"Machine turned {'ON' if state else 'OFF'} successfully!")
+    else:
+        st.error(f"Failed to send control signal: {response.status_code}")
+
 # Page Title
 st.title("Air Quality Monitoring Dashboard")
-st.write("### Data is refreshed every 1 hour.")
+st.write("### Data refreshes every hour.")
+
+# On/Off Switch for Machine Control
+st.sidebar.subheader("Machine Control")
+machine_state = st.sidebar.checkbox("Turn Machine ON")
+if st.sidebar.button("Send Control Signal"):
+    send_control_signal(machine_state)
 
 # Fetch data
 data = fetch_api_data()
 
 if not data.empty:
-    # Extract years and months from data
-    data["Year"] = data["created_at"].dt.year
-    data["Month"] = data["created_at"].dt.month
-    data["Hour"] = data["created_at"].dt.hour
+    # Sidebar Dropdown for Year
+    st.sidebar.subheader("Filter Data by Year")
+    years = sorted(data["created_at"].dt.year.unique())
+    selected_year = st.sidebar.selectbox("Select Year", years)
 
-    # Dropdowns for year and month
-    years = sorted(data["Year"].unique())
-    selected_year = st.selectbox("Select Year", years)
-
-    months = sorted(data[data["Year"] == selected_year]["Month"].unique())
-    selected_month = st.selectbox("Select Month", months)
-
-    # Filter data based on selected year and month
-    filtered_data = data[(data["Year"] == selected_year) & (data["Month"] == selected_month)]
+    # Filter data based on selected year
+    filtered_data = data[data["created_at"].dt.year == selected_year]
 
     if not filtered_data.empty:
-        st.write(f"### Data for {selected_year}-{selected_month:02d}")
+        st.write(f"### Hourly Data for {selected_year}")
 
         # Line graphs for hourly trends
         metrics = ["PM2.5", "PM10", "Ozone", "Humidity", "Temperature", "CO"]
         for metric in metrics:
-            st.subheader(f"{metric} Levels")
+            st.subheader(f"{metric} Levels Over Time")
             fig = px.line(
                 filtered_data,
                 x="created_at",
@@ -81,6 +88,6 @@ if not data.empty:
             )
             st.plotly_chart(fig, use_container_width=True)
     else:
-        st.warning(f"No data available for {selected_year}-{selected_month:02d}.")
+        st.warning(f"No data available for {selected_year}.")
 else:
     st.warning("No data available to display.")
