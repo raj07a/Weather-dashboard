@@ -2,20 +2,35 @@ import streamlit as st
 import pandas as pd
 import requests
 import plotly.express as px
-from datetime import datetime
+import seaborn as sns
+import matplotlib.pyplot as plt
 
-# API URL for data and control
-DATA_API_URL = "https://api.thingspeak.com/channels/1596152/feeds.json?results=1000"
-CONTROL_API_URL = "https://api.thingspeak.com/update"
+# Set page layout to wide
+st.set_page_config(layout="wide", page_title="Full-Screen Air Quality Dashboard")
+
+# Inject custom CSS for removing padding and maximizing content space
+st.markdown(
+    """
+    <style>
+    .css-1d391kg {padding: 0rem;}  /* Remove default padding around content */
+    .css-18e3th9 {padding: 0rem;}  /* Remove padding around sidebar */
+    .css-1cpxqw2 {max-width: 100%;} /* Increase max width of main container */
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+# API URL
+API_URL = "https://api.thingspeak.com/channels/1596152/feeds.json?results=10"
 
 # Function to fetch data from the API
 @st.cache_data(ttl=3600)  # Cache data for 1 hour
 def fetch_api_data():
-    response = requests.get(DATA_API_URL)
+    response = requests.get(API_URL)
     if response.status_code == 200:
         data = response.json()
         feeds = data["feeds"]
-
+        
         # Convert feeds into a DataFrame
         df = pd.DataFrame(feeds)
         df["created_at"] = pd.to_datetime(df["created_at"])  # Convert timestamps
@@ -32,64 +47,83 @@ def fetch_api_data():
         # Convert numeric fields
         for field in ["PM2.5", "PM10", "Ozone", "Humidity", "Temperature", "CO"]:
             df[field] = pd.to_numeric(df[field], errors="coerce")
-
-        # Resample to 1-hour intervals
-        df.set_index("created_at", inplace=True)
-        df = df.resample("1H").mean().reset_index()
-
         return df
     else:
         st.error(f"Failed to fetch data: {response.status_code}")
         return pd.DataFrame()
 
-# Function to send ON/OFF signal to the cloud
-def send_control_signal(state):
-    response = requests.post(CONTROL_API_URL, data={"field1": 1 if state else 0})
-    if response.status_code == 200:
-        st.success(f"Machine turned {'ON' if state else 'OFF'} successfully!")
-    else:
-        st.error(f"Failed to send control signal: {response.status_code}")
-
 # Page Title
 st.title("Air Quality Monitoring Dashboard")
-st.write("### Data refreshes every hour.")
+st.write("### Data is refreshed every 1 hour.")
+st.write("Toggle the switch below to control the data flow.")
 
-# On/Off Switch for Machine Control
-st.sidebar.subheader("Machine Control")
-machine_state = st.sidebar.checkbox("Turn Machine ON")
-if st.sidebar.button("Send Control Signal"):
-    send_control_signal(machine_state)
+# Initialize session state for data flow
+if "data_flow" not in st.session_state:
+    st.session_state.data_flow = True
 
-# Fetch data
-data = fetch_api_data()
+# Toggle switch for data flow
+data_flow = st.checkbox("Enable Data Flow", value=st.session_state.data_flow)
+st.session_state.data_flow = data_flow
 
+if data_flow:
+    data = fetch_api_data()
+else:
+    st.warning("Data flow is paused. Toggle the switch to fetch data.")
+    data = pd.DataFrame()
+
+# Dashboard visuals
 if not data.empty:
-    # Filter data for the current date
-    current_date = datetime.now().date()
-    filtered_data = data[data["created_at"].dt.date == current_date]
+    st.write("## Latest 10 Data Entries")
+    st.dataframe(data, height=200)
 
-    if not filtered_data.empty:
-        st.write(f"### Hourly Data for {current_date}")
+    # Dashboard Overview
+    st.write("## Dashboard Overview")
 
-        # Line graphs for hourly trends
-        metrics = ["PM2.5", "PM10", "Ozone", "Humidity", "Temperature", "CO"]
-        for metric in metrics:
-            st.subheader(f"{metric} Levels Over Time")
-            fig = px.line(
-                filtered_data,
-                x="created_at",
-                y=metric,
-                title=f"{metric} Levels Over Time (Hourly)",
-                labels={"created_at": "Time", metric: metric},
-                markers=True,
-            )
-            fig.update_xaxes(
-                dtick="3600000",  # 1 hour in milliseconds
-                tickformat="%H:%M",  # Hour:Minute format
-                title_text="Time (Hourly)",
-            )
-            st.plotly_chart(fig, use_container_width=True)
-    else:
-        st.warning(f"No data available for {current_date}.")
+    # Row 1: First two visuals
+    col1, col2 = st.columns(2)
+    with col1:
+        st.subheader("PM2.5 Levels Over Time")
+        fig1 = px.line(data, x="created_at", y="PM2.5", markers=True, title="PM2.5 Over Time")
+        fig1.update_layout(height=600)  # Set custom height
+        st.plotly_chart(fig1, use_container_width=True)
+    with col2:
+        st.subheader("PM10 Levels Over Time")
+        fig2 = px.line(data, x="created_at", y="PM10", markers=True, title="PM10 Over Time")
+        fig2.update_layout(height=600)
+        st.plotly_chart(fig2, use_container_width=True)
+
+    # Row 2: Next two visuals
+    col3, col4 = st.columns(2)
+    with col3:
+        st.subheader("Ozone Levels Over Time")
+        fig3 = px.bar(data, x="created_at", y="Ozone", color="Ozone", title="Ozone Levels")
+        fig3.update_layout(height=600)
+        st.plotly_chart(fig3, use_container_width=True)
+    with col4:
+        st.subheader("Temperature vs Humidity (Bubble Chart)")
+        fig4 = px.scatter(
+            data,
+            x="Temperature",
+            y="Humidity",
+            size="PM2.5",
+            color="PM10",
+            title="Humidity vs Temperature",
+        )
+        fig4.update_layout(height=600)
+        st.plotly_chart(fig4, use_container_width=True)
+
+    # Row 3: Final two visuals
+    col5, col6 = st.columns(2)
+    with col5:
+        st.subheader("Correlation Heatmap")
+        correlation_matrix = data.iloc[:, 1:].corr()
+        fig5, ax = plt.subplots(figsize=(12, 8))
+        sns.heatmap(correlation_matrix, annot=True, cmap="coolwarm", ax=ax)
+        st.pyplot(fig5)
+    with col6:
+        st.subheader("CO Levels Over Time")
+        fig6 = px.line(data, x="created_at", y="CO", markers=True, title="CO Levels")
+        fig6.update_layout(height=600)
+        st.plotly_chart(fig6, use_container_width=True)
 else:
     st.warning("No data available to display.")
