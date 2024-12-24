@@ -61,7 +61,7 @@ if not data.empty:
         # Time-Series Line Charts
         st.subheader("Hourly Trends")
 
-        col1, col2 = st.columns(2)
+        col1, col2 = st.columns(2, gap="large")
         with col1:
             fig1 = px.line(filtered_data, x="created_at", y="Temperature", markers=True,
                            title="Temperature Over Time (Hourly)")
@@ -74,7 +74,9 @@ if not data.empty:
             fig2.update_layout(xaxis_title="Time", yaxis_title="Humidity (%)")
             st.plotly_chart(fig2, use_container_width=True)
 
-        col3, col4 = st.columns(2)
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        col3, col4 = st.columns(2, gap="large")
         with col3:
             fig3 = px.line(filtered_data, x="created_at", y="PM2.5", markers=True,
                            title="PM2.5 Levels Over Time")
@@ -87,9 +89,11 @@ if not data.empty:
             fig4.update_layout(xaxis_title="Time", yaxis_title="PM10 (µg/m³)")
             st.plotly_chart(fig4, use_container_width=True)
 
+        st.markdown("<br>", unsafe_allow_html=True)
+
         st.subheader("Other Visuals")
 
-        col5, col6 = st.columns(2)
+        col5, col6 = st.columns(2, gap="large")
         with col5:
             fig5 = px.line(filtered_data, x="created_at", y="CO", markers=True,
                            title="CO Levels Over Time")
@@ -101,6 +105,8 @@ if not data.empty:
                            title="Ozone Levels Over Time")
             fig6.update_layout(xaxis_title="Time", yaxis_title="Ozone (ppb)")
             st.plotly_chart(fig6, use_container_width=True)
+
+        st.markdown("<br>", unsafe_allow_html=True)
     else:
         st.warning(f"No data available for {selected_month} {selected_year}.")
 else:
