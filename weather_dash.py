@@ -14,7 +14,7 @@ def fetch_api_data():
     if response.status_code == 200:
         data = response.json()
         feeds = data["feeds"]
-
+        
         # Convert feeds into a DataFrame
         df = pd.DataFrame(feeds)
         df["created_at"] = pd.to_datetime(df["created_at"])  # Convert timestamps
@@ -52,7 +52,15 @@ if not data.empty:
     st.sidebar.header("Filters")
     selected_year = st.sidebar.selectbox("Select Year", options=sorted(data["Year"].unique()), index=0)
     selected_month = st.sidebar.selectbox("Select Month", options=data["Month"].unique(), index=0)
-    selected_field = st.sidebar.selectbox("Select Metric", ["Temperature", "Humidity", "PM2.5", "PM10", "CO", "Ozone"], index=0)
+    #selected_field = st.sidebar.selectbox("Select Metric", ["Temperature", "Humidity", "PM2.5", "PM10", "CO", "Ozone"], index=0)
+
+    # Machine Control Toggle
+    if st.sidebar.button("Turn ON Machine"):
+        # Placeholder for sending an ON signal to the cloud
+        st.sidebar.success("Machine Turned ON")
+    if st.sidebar.button("Turn OFF Machine"):
+        # Placeholder for sending an OFF signal to the cloud
+        st.sidebar.warning("Machine Turned OFF")
 
     # Filter data based on selection
     filtered_data = data[(data["Year"] == selected_year) & (data["Month"] == selected_month)]
@@ -60,9 +68,8 @@ if not data.empty:
     if not filtered_data.empty:
         st.write(f"## Data for {selected_month} {selected_year}")
 
-        # Ensure created_at is set as index for resampling
-        filtered_data.set_index("created_at", inplace=True)
-        filtered_data = filtered_data.resample('2H').mean().reset_index()
+        # Resample data to 2-hour intervals
+        filtered_data = filtered_data.resample('2H', on='created_at').mean().reset_index()
 
         # Time-Series Line Charts
         st.subheader("Hourly Trends")
