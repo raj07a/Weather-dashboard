@@ -2,10 +2,26 @@ import streamlit as st
 import pandas as pd
 import requests
 import plotly.express as px
-from datetime import timedelta
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+# Set page layout to wide
+st.set_page_config(layout="wide", page_title="Full-Screen Air Quality Dashboard")
+
+# Inject custom CSS for removing padding and maximizing content space
+st.markdown(
+    """
+    <style>
+    .css-1d391kg {padding: 0rem;}  /* Remove default padding around content */
+    .css-18e3th9 {padding: 0rem;}  /* Remove padding around sidebar */
+    .css-1cpxqw2 {max-width: 100%;} /* Increase max width of main container */
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 
 # API URL
-API_URL = "https://api.thingspeak.com/channels/1596152/feeds.json?results=800"
+API_URL = "https://api.thingspeak.com/channels/1596152/feeds.json?results=10"
 
 # Function to fetch data from the API
 @st.cache_data(ttl=3600)  # Cache data for 1 hour
@@ -38,89 +54,76 @@ def fetch_api_data():
 
 # Page Title
 st.title("Air Quality Monitoring Dashboard")
-st.write("### Data refreshes automatically every 1 hour.")
+st.write("### Data is refreshed every 1 hour.")
+st.write("Toggle the switch below to control the data flow.")
 
-# Fetch data
-data = fetch_api_data()
+# Initialize session state for data flow
+if "data_flow" not in st.session_state:
+    st.session_state.data_flow = True
 
+# Toggle switch for data flow
+data_flow = st.checkbox("Enable Data Flow", value=st.session_state.data_flow)
+st.session_state.data_flow = data_flow
+
+if data_flow:
+    data = fetch_api_data()
+else:
+    st.warning("Data flow is paused. Toggle the switch to fetch data.")
+    data = pd.DataFrame()
+
+# Dashboard visuals
 if not data.empty:
-    # Extract year and month for dropdown
-    data["Year"] = data["created_at"].dt.year
-    data["Month"] = data["created_at"].dt.month_name()
+    st.write("## Latest 10 Data Entries")
+    st.dataframe(data, height=200)
 
-    # Sidebar Filters
-    st.sidebar.header("Filters")
-    selected_year = st.sidebar.selectbox("Select Year", options=sorted(data["Year"].unique()), index=0)
-    selected_month = st.sidebar.selectbox("Select Month", options=data["Month"].unique(), index=0)
-    selected_field = st.sidebar.selectbox("Select Metric", ["Temperature", "Humidity", "PM2.5", "PM10", "CO", "Ozone"], index=0)
+    # Dashboard Overview
+    st.write("## Dashboard Overview")
 
-    # Machine Control Toggle
-    if st.sidebar.button("Turn ON Machine"):
-        # Placeholder for sending an ON signal to the cloud
-        st.sidebar.success("Machine Turned ON")
-    if st.sidebar.button("Turn OFF Machine"):
-        # Placeholder for sending an OFF signal to the cloud
-        st.sidebar.warning("Machine Turned OFF")
+    # Row 1: First two visuals
+    col1, col2 = st.columns(2)
+    with col1:
+        st.subheader("PM2.5 Levels Over Time")
+        fig1 = px.line(data, x="created_at", y="PM2.5", markers=True, title="PM2.5 Over Time")
+        fig1.update_layout(height=600)  # Set custom height
+        st.plotly_chart(fig1, use_container_width=True)
+    with col2:
+        st.subheader("PM10 Levels Over Time")
+        fig2 = px.line(data, x="created_at", y="PM10", markers=True, title="PM10 Over Time")
+        fig2.update_layout(height=600)
+        st.plotly_chart(fig2, use_container_width=True)
 
-    # Filter data based on selection
-    filtered_data = data[(data["Year"] == selected_year) & (data["Month"] == selected_month)]
+    # Row 2: Next two visuals
+    col3, col4 = st.columns(2)
+    with col3:
+        st.subheader("Ozone Levels Over Time")
+        fig3 = px.bar(data, x="created_at", y="Ozone", color="Ozone", title="Ozone Levels")
+        fig3.update_layout(height=600)
+        st.plotly_chart(fig3, use_container_width=True)
+    with col4:
+        st.subheader("Temperature vs Humidity (Bubble Chart)")
+        fig4 = px.scatter(
+            data,
+            x="Temperature",
+            y="Humidity",
+            size="PM2.5",
+            color="PM10",
+            title="Humidity vs Temperature",
+        )
+        fig4.update_layout(height=600)
+        st.plotly_chart(fig4, use_container_width=True)
 
-    if not filtered_data.empty:
-        st.write(f"## Data for {selected_month} {selected_year}")
-
-        # Resample data to 2-hour intervals
-        filtered_data = filtered_data.resample('2H', on='created_at').mean().reset_index()
-
-        # Time-Series Line Charts
-        st.subheader("Hourly Trends")
-
-        col1, col2 = st.columns(2, gap="large")
-        with col1:
-            fig1 = px.line(filtered_data, x="created_at", y="Temperature", markers=True,
-                           title="Temperature Over Time (2-Hour Intervals)")
-            fig1.update_layout(xaxis_title="Time", yaxis_title="Temperature (°C)")
-            st.plotly_chart(fig1, use_container_width=True)
-
-        with col2:
-            fig2 = px.line(filtered_data, x="created_at", y="Humidity", markers=True,
-                           title="Humidity Over Time (2-Hour Intervals)")
-            fig2.update_layout(xaxis_title="Time", yaxis_title="Humidity (%)")
-            st.plotly_chart(fig2, use_container_width=True)
-
-        st.markdown("<br>", unsafe_allow_html=True)
-
-        col3, col4 = st.columns(2, gap="large")
-        with col3:
-            fig3 = px.line(filtered_data, x="created_at", y="PM2.5", markers=True,
-                           title="PM2.5 Levels Over Time (2-Hour Intervals)")
-            fig3.update_layout(xaxis_title="Time", yaxis_title="PM2.5 (µg/m³)")
-            st.plotly_chart(fig3, use_container_width=True)
-
-        with col4:
-            fig4 = px.line(filtered_data, x="created_at", y="PM10", markers=True,
-                           title="PM10 Levels Over Time (2-Hour Intervals)")
-            fig4.update_layout(xaxis_title="Time", yaxis_title="PM10 (µg/m³)")
-            st.plotly_chart(fig4, use_container_width=True)
-
-        st.markdown("<br>", unsafe_allow_html=True)
-
-        st.subheader("Other Visuals")
-
-        col5, col6 = st.columns(2, gap="large")
-        with col5:
-            fig5 = px.line(filtered_data, x="created_at", y="CO", markers=True,
-                           title="CO Levels Over Time (2-Hour Intervals)")
-            fig5.update_layout(xaxis_title="Time", yaxis_title="CO (ppm)")
-            st.plotly_chart(fig5, use_container_width=True)
-
-        with col6:
-            fig6 = px.line(filtered_data, x="created_at", y="Ozone", markers=True,
-                           title="Ozone Levels Over Time (2-Hour Intervals)")
-            fig6.update_layout(xaxis_title="Time", yaxis_title="Ozone (ppb)")
-            st.plotly_chart(fig6, use_container_width=True)
-
-        st.markdown("<br>", unsafe_allow_html=True)
-    else:
-        st.warning(f"No data available for {selected_month} {selected_year}.")
+    # Row 3: Final two visuals
+    col5, col6 = st.columns(2)
+    with col5:
+        st.subheader("Correlation Heatmap")
+        correlation_matrix = data.iloc[:, 1:].corr()
+        fig5, ax = plt.subplots(figsize=(12, 8))
+        sns.heatmap(correlation_matrix, annot=True, cmap="coolwarm", ax=ax)
+        st.pyplot(fig5)
+    with col6:
+        st.subheader("CO Levels Over Time")
+        fig6 = px.line(data, x="created_at", y="CO", markers=True, title="CO Levels")
+        fig6.update_layout(height=600)
+        st.plotly_chart(fig6, use_container_width=True)
 else:
     st.warning("No data available to display.")
