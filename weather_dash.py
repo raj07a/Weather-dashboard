@@ -63,16 +63,21 @@ if st.sidebar.button("Send Control Signal"):
 data = fetch_api_data()
 
 if not data.empty:
-    # Sidebar Dropdown for Year
-    st.sidebar.subheader("Filter Data by Year")
+    # Sidebar Dropdown for Year and Month
+    st.sidebar.subheader("Filter Data by Year and Month")
     years = sorted(data["created_at"].dt.year.unique())
     selected_year = st.sidebar.selectbox("Select Year", years)
 
-    # Filter data based on selected year
-    filtered_data = data[data["created_at"].dt.year == selected_year]
+    months = sorted(data["created_at"][data["created_at"].dt.year == selected_year].dt.month.unique())
+    selected_month = st.sidebar.selectbox("Select Month", months)
+
+    # Filter data based on selected year and month
+    filtered_data = data[
+        (data["created_at"].dt.year == selected_year) & (data["created_at"].dt.month == selected_month)
+    ]
 
     if not filtered_data.empty:
-        st.write(f"### Hourly Data for {selected_year}")
+        st.write(f"### Hourly Data for {selected_year}-{selected_month:02d}")
 
         # Line graphs for hourly trends
         metrics = ["PM2.5", "PM10", "Ozone", "Humidity", "Temperature", "CO"]
@@ -82,12 +87,17 @@ if not data.empty:
                 filtered_data,
                 x="created_at",
                 y=metric,
-                title=f"{metric} Levels Over Time",
+                title=f"{metric} Levels Over Time (Hourly)",
                 labels={"created_at": "Time", metric: metric},
                 markers=True,
             )
+            fig.update_xaxes(
+                dtick="3600000",  # 1 hour in milliseconds
+                tickformat="%H:%M",  # Hour:Minute format
+                title_text="Time (Hourly)",
+            )
             st.plotly_chart(fig, use_container_width=True)
     else:
-        st.warning(f"No data available for {selected_year}.")
+        st.warning(f"No data available for {selected_year}-{selected_month:02d}.")
 else:
     st.warning("No data available to display.")
