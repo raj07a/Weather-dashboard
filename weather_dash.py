@@ -52,8 +52,7 @@ if not data.empty:
     st.sidebar.header("Filters")
     selected_year = st.sidebar.selectbox("Select Year", options=sorted(data["Year"].unique()), index=0)
     selected_month = st.sidebar.selectbox("Select Month", options=data["Month"].unique(), index=0)
-    selected_field = st.sidebar.selectbox("Select Metric", ["Temperature", "Humidity", "PM2.5", "PM10", "CO", "Ozone"], index=0)
-
+    
     # Machine Control Toggle
     if st.sidebar.button("Turn ON Machine"):
         # Placeholder for sending an ON signal to the cloud
