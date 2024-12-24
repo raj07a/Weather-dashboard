@@ -14,7 +14,7 @@ def fetch_api_data():
     if response.status_code == 200:
         data = response.json()
         feeds = data["feeds"]
-        
+
         # Convert feeds into a DataFrame
         df = pd.DataFrame(feeds)
         df["created_at"] = pd.to_datetime(df["created_at"])  # Convert timestamps
@@ -55,12 +55,13 @@ if not data.empty:
     selected_field = st.sidebar.selectbox("Select Metric", ["Temperature", "Humidity", "PM2.5", "PM10", "CO", "Ozone"], index=0)
 
     # Machine Control Toggle
-    if st.sidebar.button("Turn ON Machine"):
+    machine_status = st.sidebar.checkbox("Machine Status", value=False, help="Toggle to send ON/OFF signal to the cloud.")
+    if machine_status:
+        st.sidebar.success("Machine is ON")
         # Placeholder for sending an ON signal to the cloud
-        st.sidebar.success("Machine Turned ON")
-    if st.sidebar.button("Turn OFF Machine"):
+    else:
+        st.sidebar.warning("Machine is OFF")
         # Placeholder for sending an OFF signal to the cloud
-        st.sidebar.warning("Machine Turned OFF")
 
     # Filter data based on selection
     filtered_data = data[(data["Year"] == selected_year) & (data["Month"] == selected_month)]
@@ -68,8 +69,9 @@ if not data.empty:
     if not filtered_data.empty:
         st.write(f"## Data for {selected_month} {selected_year}")
 
-        # Resample data to 2-hour intervals
-        filtered_data = filtered_data.resample('2H', on='created_at').mean().reset_index()
+        # Ensure created_at is set as index for resampling
+        filtered_data.set_index("created_at", inplace=True)
+        filtered_data = filtered_data.resample('2H').mean().reset_index()
 
         # Time-Series Line Charts
         st.subheader("Hourly Trends")
