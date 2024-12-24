@@ -54,15 +54,6 @@ if not data.empty:
     selected_month = st.sidebar.selectbox("Select Month", options=data["Month"].unique(), index=0)
     selected_field = st.sidebar.selectbox("Select Metric", ["Temperature", "Humidity", "PM2.5", "PM10", "CO", "Ozone"], index=0)
 
-    # Machine Control Toggle
-    machine_status = st.sidebar.checkbox("Machine Status", value=False, help="Toggle to send ON/OFF signal to the cloud.")
-    if machine_status:
-        st.sidebar.success("Machine is ON")
-        # Placeholder for sending an ON signal to the cloud
-    else:
-        st.sidebar.warning("Machine is OFF")
-        # Placeholder for sending an OFF signal to the cloud
-
     # Filter data based on selection
     filtered_data = data[(data["Year"] == selected_year) & (data["Month"] == selected_month)]
 
