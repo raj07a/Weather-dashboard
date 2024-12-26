@@ -70,9 +70,10 @@ if not data.empty:
     if not filtered_data.empty:
         st.write(f"## Data for {selected_month} {selected_year}")
 
-        # Resample data to 2-hour intervals
-        filtered_data = filtered_data.dropna()
-        filtered_data = filtered_data.set_index("created_at").resample("2H").mean().reset_index()
+        # Resample data to 2-hour intervals, ensuring only numeric columns are averaged
+        filtered_data = filtered_data.dropna()  # Drop rows with NaN values
+        numeric_columns = filtered_data.select_dtypes(include=['float64', 'int64']).columns  # Select numeric columns
+        filtered_data = filtered_data.set_index("created_at").resample("2H")[numeric_columns].mean().reset_index()
 
         # Time-Series Line Charts
         st.subheader("Hourly Trends")
