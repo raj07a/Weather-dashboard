@@ -5,7 +5,7 @@ import plotly.express as px
 from datetime import timedelta
 
 # API URL
-API_URL = "https://api.thingspeak.com/channels/1596152/feeds.json?results=10"
+API_URL = "https://api.thingspeak.com/channels/1596152/feeds.json?results=800"
 
 # Function to fetch data from the API
 @st.cache_data(ttl=3600)  # Cache data for 1 hour
@@ -14,10 +14,12 @@ def fetch_api_data():
     if response.status_code == 200:
         data = response.json()
         feeds = data["feeds"]
-        
+
         # Convert feeds into a DataFrame
         df = pd.DataFrame(feeds)
-        df["created_at"] = pd.to_datetime(df["created_at"])  # Convert timestamps
+        df["created_at"] = pd.to_datetime(df["created_at"], errors="coerce")  # Convert timestamps
+        if df["created_at"].isnull().any():
+            st.error("Some timestamps could not be parsed. Check data format.")
         df = df.rename(
             columns={
                 "field1": "PM2.5",
@@ -52,7 +54,8 @@ if not data.empty:
     st.sidebar.header("Filters")
     selected_year = st.sidebar.selectbox("Select Year", options=sorted(data["Year"].unique()), index=0)
     selected_month = st.sidebar.selectbox("Select Month", options=data["Month"].unique(), index=0)
-    
+    selected_field = st.sidebar.selectbox("Select Metric", ["Temperature", "Humidity", "PM2.5", "PM10", "CO", "Ozone"], index=0)
+
     # Machine Control Toggle
     if st.sidebar.button("Turn ON Machine"):
         # Placeholder for sending an ON signal to the cloud
@@ -68,7 +71,8 @@ if not data.empty:
         st.write(f"## Data for {selected_month} {selected_year}")
 
         # Resample data to 2-hour intervals
-        filtered_data = filtered_data.resample('2H', on='created_at').mean().reset_index()
+        filtered_data = filtered_data.dropna()
+        filtered_data = filtered_data.set_index("created_at").resample("2H").mean().reset_index()
 
         # Time-Series Line Charts
         st.subheader("Hourly Trends")
