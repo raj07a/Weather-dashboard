@@ -5,7 +5,7 @@ import plotly.express as px
 from datetime import timedelta
 
 # API URL
-API_URL = "https://api.thingspeak.com/channels/1596152/feeds.json?results=800"
+API_URL = "https://api.thingspeak.com/channels/1596152/feeds.json?results=10"
 
 # Function to fetch data from the API
 @st.cache_data(ttl=3600)  # Cache data for 1 hour
