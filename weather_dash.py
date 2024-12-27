@@ -71,7 +71,7 @@ if not data.empty:
 
         # Resample data to 1-hour intervals
         filtered_data = filtered_data.dropna()
-        filtered_data = filtered_data.set_index("created_at").resample("1H").mean(numeric_only=True).reset_index()
+        filtered_data = filtered_data.set_index("created_at").resample("1h").mean(numeric_only=True).reset_index()
 
         # Line Chart for Temperature
         st.subheader("Temperature Over Time")
