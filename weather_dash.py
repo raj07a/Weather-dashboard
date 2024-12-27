@@ -73,13 +73,47 @@ if not data.empty:
         filtered_data = filtered_data.dropna()
         filtered_data = filtered_data.set_index("created_at").resample("1H").mean(numeric_only=True).reset_index()
 
-        # Time-Series Line Chart
-        st.subheader("Hourly Trends")
+        # Line Chart for Temperature
+        st.subheader("Temperature Over Time")
+        temp_fig = px.line(filtered_data, x="created_at", y="Temperature", markers=True,
+                            title="Temperature Over Time (1-Hour Intervals)")
+        temp_fig.update_layout(xaxis_title="Time", yaxis_title="Temperature (°C)")
+        st.plotly_chart(temp_fig, use_container_width=True)
 
-        fig = px.line(filtered_data, x="created_at", y="Temperature", markers=True,
-                      title="Value Over Time (1-Hour Intervals)")
-        fig.update_layout(xaxis_title="Time", yaxis_title="Value")
-        st.plotly_chart(fig, use_container_width=True)
+        # Line Chart for Humidity
+        st.subheader("Humidity Over Time")
+        humidity_fig = px.line(filtered_data, x="created_at", y="Humidity", markers=True,
+                                title="Humidity Over Time (1-Hour Intervals)")
+        humidity_fig.update_layout(xaxis_title="Time", yaxis_title="Humidity (%)")
+        st.plotly_chart(humidity_fig, use_container_width=True)
+
+        # Line Chart for PM2.5
+        st.subheader("PM2.5 Over Time")
+        pm25_fig = px.line(filtered_data, x="created_at", y="PM2.5", markers=True,
+                            title="PM2.5 Over Time (1-Hour Intervals)")
+        pm25_fig.update_layout(xaxis_title="Time", yaxis_title="PM2.5 (µg/m³)")
+        st.plotly_chart(pm25_fig, use_container_width=True)
+
+        # Line Chart for PM10
+        st.subheader("PM10 Over Time")
+        pm10_fig = px.line(filtered_data, x="created_at", y="PM10", markers=True,
+                            title="PM10 Over Time (1-Hour Intervals)")
+        pm10_fig.update_layout(xaxis_title="Time", yaxis_title="PM10 (µg/m³)")
+        st.plotly_chart(pm10_fig, use_container_width=True)
+
+        # Line Chart for Ozone
+        st.subheader("Ozone Over Time")
+        ozone_fig = px.line(filtered_data, x="created_at", y="Ozone", markers=True,
+                             title="Ozone Over Time (1-Hour Intervals)")
+        ozone_fig.update_layout(xaxis_title="Time", yaxis_title="Ozone (ppb)")
+        st.plotly_chart(ozone_fig, use_container_width=True)
+
+        # Line Chart for CO
+        st.subheader("CO Over Time")
+        co_fig = px.line(filtered_data, x="created_at", y="CO", markers=True,
+                          title="CO Over Time (1-Hour Intervals)")
+        co_fig.update_layout(xaxis_title="Time", yaxis_title="CO (ppm)")
+        st.plotly_chart(co_fig, use_container_width=True)
 
         st.markdown("<br>", unsafe_allow_html=True)
     else:
