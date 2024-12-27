@@ -73,14 +73,13 @@ if not data.empty:
         filtered_data = filtered_data.dropna()
         filtered_data = filtered_data.set_index("created_at").resample("1H").mean().reset_index()
 
-        # Time-Series Line Charts
+        # Time-Series Line Chart
         st.subheader("Hourly Trends")
 
-        for field in ["PM2.5", "PM10", "Ozone", "Humidity", "Temperature", "CO"]:
-            fig = px.line(filtered_data, x="created_at", y=field, markers=True,
-                          title=f"{field} Over Time (1-Hour Intervals)")
-            fig.update_layout(xaxis_title="Time", yaxis_title=f"{field}")
-            st.plotly_chart(fig, use_container_width=True)
+        fig = px.line(filtered_data, x="created_at", y="Temperature", markers=True,
+                      title="Temperature Over Time (1-Hour Intervals)")
+        fig.update_layout(xaxis_title="Time", yaxis_title="Temperature")
+        st.plotly_chart(fig, use_container_width=True)
 
         st.markdown("<br>", unsafe_allow_html=True)
     else:
