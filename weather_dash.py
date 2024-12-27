@@ -76,7 +76,7 @@ if not data.empty:
         # Time-Series Line Charts
         st.subheader("Hourly Trends")
 
-        for field in ["Temperature", "Humidity", "PM2.5", "PM10", "CO", "Ozone"]:
+        for field in ["PM2.5", "PM10", "Ozone", "Humidity", "Temperature", "CO"]:
             fig = px.line(filtered_data, x="created_at", y=field, markers=True,
                           title=f"{field} Over Time (1-Hour Intervals)")
             fig.update_layout(xaxis_title="Time", yaxis_title=f"{field}")
