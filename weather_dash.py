@@ -71,14 +71,14 @@ if not data.empty:
 
         # Resample data to 1-hour intervals
         filtered_data = filtered_data.dropna()
-        filtered_data = filtered_data.set_index("created_at").resample("1H").mean().reset_index()
+        filtered_data = filtered_data.set_index("created_at").resample("1H").mean(numeric_only=True).reset_index()
 
         # Time-Series Line Chart
         st.subheader("Hourly Trends")
 
         fig = px.line(filtered_data, x="created_at", y="Temperature", markers=True,
-                      title="Temperature Over Time (1-Hour Intervals)")
-        fig.update_layout(xaxis_title="Time", yaxis_title="Temperature")
+                      title="Value Over Time (1-Hour Intervals)")
+        fig.update_layout(xaxis_title="Time", yaxis_title="Value")
         st.plotly_chart(fig, use_container_width=True)
 
         st.markdown("<br>", unsafe_allow_html=True)
